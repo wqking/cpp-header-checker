@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Tool cpp-header-checker
 #
 # Copyright (C) 2022 Wang Qi (wqking)
@@ -126,8 +128,7 @@ class CompleteHeaderProcessor(TaskProcessor) :
 		if result.returncode == 0 :
 			self.getApp().log('%s - OK' % (header))
 		else :
-			self.getApp().log('%s - ERROR' % (header))
-			self.getApp().log(result.stdout)
+			self.getApp().log('%s - ERROR\n%s' % (header, result.stdout))
 
 class RedundantHeaderProcessor(TaskProcessor) :
 	def __init__(self, app):
@@ -158,15 +159,16 @@ class RedundantHeaderProcessor(TaskProcessor) :
 					redundantIncludeList.append(include)
 			finally:
 				os.unlink(newFullHeaderName)
+
 		if len(redundantIncludeList) == 0 :
 			self.getApp().log('%s - OK' % (header))
 		else :
-			# Display log after all #includes are checked, this ease to look at the errors
+			# Display log after all #includes are checked, this ease for looking at the errors
 			self.getApp().log('%s - ERROR redundant: %s' % (header, ', '.join(redundantIncludeList)))
 
 class Application :
 	def __init__(self) :
-		self._headerPatternList = []
+		self._sourcePatternList = []
 		self._excludePatterns = []
 		self._command = 'gcc {file} -c -o {file}.o'
 		self._tempPath = None
@@ -193,7 +195,8 @@ class Application :
 		return self._stopping
 
 	def run(self) :
-		self._parseCommandLine(sys.argv[1:])
+		if not self._parseCommandLine(sys.argv[1:]) :
+			return
 		self._processor.initialize()
 		try :
 			self._doRun()
@@ -203,7 +206,7 @@ class Application :
 			self._processor.finalize()
 
 	def _doRun(self) :
-		for pattern in self._headerPatternList :
+		for pattern in self._sourcePatternList :
 			fileList = glob.glob(pattern, recursive = True)
 			for file in fileList :
 				if self._canProcessFile(file) :
@@ -228,8 +231,7 @@ class Application :
 			self._queue.task_done()
 
 	def _doTask(self, task) :
-		headerFile = task
-		self._processor.process(headerFile)
+		self._processor.process(task)
 
 	def _canProcessFile(self, file) :
 		for exclude in self._excludePatterns :
@@ -241,7 +243,7 @@ class Application :
 		parser = argparse.ArgumentParser(add_help = False)
 		parser.add_argument('--help', action = 'store_true', help = 'Show help message')
 		parser.add_argument('-h', action = 'store_true', dest = 'help', help = 'Show help message')
-		parser.add_argument('--header', action = 'append', required = True, help = "The header file patterns, can have path and wildcard")
+		parser.add_argument('--source', action = 'append', required = True, help = "The source file patterns, can have path and wildcard")
 		parser.add_argument(
 			'action',
 			nargs='?',
@@ -254,15 +256,22 @@ class Application :
 		parser.add_argument('--exclude', action = 'append', required = False, help = "The patterns to exclude, can not have wildcard")
 		parser.add_argument('--threads', required = False, type = int, help = "Number of threads", default = None)
 
-		options = parser.parse_args(commandLineArguments)
-		options = vars(options)
-		#print(options)
+		if len(commandLineArguments) == 0 :
+			self._showUsage(parser)
+			return False
+
+		try :
+			options = parser.parse_args(commandLineArguments)
+			options = vars(options)
+		except :
+			self._showUsage(parser)
+			return False
 
 		if options['help'] :
 			self._showUsage(parser)
 			return False
 
-		self._headerPatternList = options['header']
+		self._sourcePatternList = options['source']
 		self._command = options['command']
 		self._tempPath = options['temp']
 		if self._tempPath is None :
@@ -281,6 +290,7 @@ class Application :
 			self._processor = RedundantHeaderProcessor(self)
 		else :
 			self._processor = CompleteHeaderProcessor(self)
+		return True
 
 	def _showUsage(self, parser) :
 		parser.print_help()
