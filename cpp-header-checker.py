@@ -32,6 +32,7 @@ import shutil
 import codecs
 import re
 import pathlib
+import shlex
 
 def getRandomString(length) :
 	return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
@@ -124,7 +125,7 @@ class CompleteHeaderProcessor(TaskProcessor) :
 		fullMainFileName = self.makeTempFileName(mainFileName)
 		command = self.makeCommand(fullMainFileName)
 		writeFile(fullMainFileName, self.makeMainSourceCode(header))
-		result = subprocess.run(command, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
+		result = subprocess.run(shlex.split(command), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
 		if result.returncode == 0 :
 			self.getApp().log('%s - OK' % (header))
 		else :
@@ -144,14 +145,14 @@ class RedundantHeaderProcessor(TaskProcessor) :
 				break
 			includeIndexToRemove += 1
 			newHeaderName = self.getRandomFileName('.h')
-			newFullHeaderName = os.path.join(pathlib.Path(header).parent.resolve(), newHeaderName)
+			newFullHeaderName = os.path.join(str(pathlib.Path(header).parent.resolve()), newHeaderName)
 			writeFile(newFullHeaderName, content)
 			try :
 				mainFileName = self.getRandomFileName('.cpp')
 				fullMainFileName = self.makeTempFileName(mainFileName)
 				command = self.makeCommand(fullMainFileName)
 				writeFile(fullMainFileName, self.makeMainSourceCode(newFullHeaderName))
-				result = subprocess.run(command, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
+				result = subprocess.run(shlex.split(command), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
 				if result.returncode == 0 :
 					include = include.replace('#include', '')
 					include = re.sub(r'[\"\'\<\>]', '', include)

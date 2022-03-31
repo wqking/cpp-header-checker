@@ -39,7 +39,8 @@ If the action is `redundant`, it will check for redundant.
 
 SOURCE is the file pattern of the source files, the pattern can include wildcard `*`, and may include `**` to indicate recursive folders.  
 There can be multiple `--source SOURCE`.  
-The source can be C++ header files, or C++ source files.
+The source can be C++ header files, or C++ source files.  
+Note: on Linux shell, the recursive wildcard `**` maybe expanded to multiple files by the shell, that will cause wrong arguments to the tool. To fix that, escape the second *, that's `*\*`. For example, `--source ~/projects/eventpp/include/*\*/*.h`. On Windows the second * doens't need the escape.
 
 #### --command COMMAND, optional, but usually you should specify it
 
