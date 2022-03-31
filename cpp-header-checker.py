@@ -71,6 +71,12 @@ def test_removeNthInclude() :
 	print(removeNthInclude(content, 1))
 	print(removeNthInclude(content, 2))
 
+def isWindows() :
+	return sys.platform.startswith('win')
+
+def normalizeCommand(command) :
+	return shlex.split(command, posix = not isWindows())
+
 class TaskProcessor :
 	def __init__(self, app) :
 		self._app = app
@@ -125,7 +131,7 @@ class CompleteHeaderProcessor(TaskProcessor) :
 		fullMainFileName = self.makeTempFileName(mainFileName)
 		command = self.makeCommand(fullMainFileName)
 		writeFile(fullMainFileName, self.makeMainSourceCode(header))
-		result = subprocess.run(shlex.split(command), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
+		result = subprocess.run(normalizeCommand(command), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
 		if result.returncode == 0 :
 			self.getApp().log('%s - OK' % (header))
 		else :
@@ -152,7 +158,7 @@ class RedundantHeaderProcessor(TaskProcessor) :
 				fullMainFileName = self.makeTempFileName(mainFileName)
 				command = self.makeCommand(fullMainFileName)
 				writeFile(fullMainFileName, self.makeMainSourceCode(newFullHeaderName))
-				result = subprocess.run(shlex.split(command), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
+				result = subprocess.run(normalizeCommand(command), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
 				if result.returncode == 0 :
 					include = include.replace('#include', '')
 					include = re.sub(r'[\"\'\<\>]', '', include)
