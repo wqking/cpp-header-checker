@@ -75,7 +75,7 @@ Specify the number of threads to execute the check. Default is the number of CPU
 Below command can check if the headers are self contained in my [eventpp library](https://github.com/wqking/eventpp)
 
 ```
-python cpp-header-checker.py complete --source EVENTPP_FOLDER/include/**/*.h --temp ./temp --command "gcc {file} -c -o {file}.o -IEVENTPP_FOLDER/include" --exclude _i.h
+python cpp-header-checker.py complete --source "EVENTPP_FOLDER/include/**/*.h" --temp ./temp --command "gcc {file} -c -o {file}.o -IEVENTPP_FOLDER/include" --exclude _i.h
 ```
 
 #### Check redundant #include for eventpp library
@@ -83,7 +83,7 @@ python cpp-header-checker.py complete --source EVENTPP_FOLDER/include/**/*.h --t
 Below command can check if any `#include` is redundant in my [eventpp library](https://github.com/wqking/eventpp)
 
 ```
-python cpp-header-checker.py redundant --source EVENTPP_FOLDER/include/**/*.h --temp ./temp --command "gcc {file} -c -o {file}.o -IEVENTPP_FOLDER/include" --exclude _i.h
+python cpp-header-checker.py redundant --source "EVENTPP_FOLDER/include/**/*.h" --temp ./temp --command "gcc {file} -c -o {file}.o -IEVENTPP_FOLDER/include" --exclude _i.h
 ```
 
 ## How it works
