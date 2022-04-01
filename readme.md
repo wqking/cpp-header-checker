@@ -40,7 +40,7 @@ If the action is `redundant`, it will check for redundant.
 SOURCE is the file pattern of the source files, the pattern can include wildcard `*`, and may include `**` to indicate recursive folders.  
 There can be multiple `--source SOURCE`.  
 The source can be C++ header files, or C++ source files.  
-Note: on Linux shell, the recursive wildcard `**` maybe expanded to multiple files by the shell, that will cause wrong arguments to the tool. To fix that, escape the second *, that's `*\*`. For example, `--source ~/projects/eventpp/include/*\*/*.h`. On Windows the second * doens't need the escape.
+Note: on Linux shell, the recursive wildcard `**` maybe expanded to multiple files by the shell, that will cause wrong arguments to the tool. To fix that, escape the second *, that's `*\*`. For example, `--source ~/projects/eventpp/include/*\*/*.h`. On Windows the second * doesn't need the escape.
 
 #### --command COMMAND, optional, but usually you should specify it
 
@@ -89,16 +89,16 @@ python cpp-header-checker.py redundant --source EVENTPP_FOLDER/include/**/*.h --
 
 ## How it works
 
-The tool creates a C++ source file with unique random name in a sub directory under the folder specified by `--temp`, then uses the command specified by `--command` to compile the source file. For different action, the tool uses different strategy to do the check.
+The tool creates a C++ source file with a unique random name in a sub-directory under the folder specified by `--temp`, then uses the command specified by `--command` to compile the source file. For different actions, the tool uses different strategies to do the check.
 
-For action `complete`, which checks self contained header, the tool puts `#include` of the header under checking in the source file directly. Then the tool compiles the source file. If the compiling succeeds with exit code 0, the tool treats the header is self contained. If the compiling fails with non-zero exit code, the tool threats the header is not self contained, it reports error and print the compile error messages, then the programmer can fix the compile error until the tool doesn't report error.  
+For action `complete`, which checks for self contained headers, the tool puts `#include` of the header being checked in the source file directly. Then the tool compiles the source file. If the compilation succeeds with exit code 0, the tool considers the header to be self contained. If the compiling fails with non-zero exit code, the tool considers the header to be not self contained, it reports an error and print the compiler error messages. Then the programmer can fix the compiler errors until the tool doesn't report an error.  
 
-For action `redundant`, which checks if any `#include` is redundant, the tool will create a temporary file in the directory where the header file is in, the temporary file contains all code of the header, except that one `#include` is removed. Then the tool `#include` that temporary header in a C++ source file, then the tool compiles it. If the compiling fails with non-zero exit code, the tool threats it success. If the compiling succeeds with exit code 0, the tool reports error that the removed `#include` is redundant. To fix redundant `#include`, the programmer should remove them manually then build the C++ project to see if it compile. Don't rely on the tool because it can give false result.  
+For action `redundant`, which checks if any `#include` is redundant, the tool will create a temporary file in the directory where the header file is in. The temporary file contains all code of the header, except that one `#include` is removed. Then the tool `#include` that temporary header in a C++ source file, then the tool compiles it. If the compiling fails with non-zero exit code, the tool treats it as success. If the compiling succeeds with exit code 0, the tool reports error that the removed `#include` is redundant. To fix a redundant `#include`, the programmer should remove them manually then build the C++ project to see if it still compiles. Don't rely on the tool because it can give false results.  
 
 ## Note when checking redundant  
-1. Before checking for redundant, the source files must be self contained. That's to say, you should use `complete` action and be sure the tool doesn't find any errors.  
-2. The folder where the C++ files are in must be writable by the tool, because the tool will create temporary C++ files there, but the tool won't modify any existing any C++ files.  
-3. The tool may give false result, especially when the C++ file has lots of templates. Template may be compiled successfully on the first phase, but fail on the second phase, the tool only checks for first phase. Note checking for self contained (complete) usually doesn't give false result.   
+1. Before checking for redundant, the source files must be self-contained. That's to say, you should use `complete` action and be sure the tool doesn't find any errors.  
+2. The folder where the C++ files are in must be writable by the tool, because the tool will create temporary C++ files there, but the tool won't modify any existing C++ files.  
+3. The tool may give false results, especially when the C++ file has lots of templates. A template may be compiled successfully on the first phase, but fail on the second phase, the tool only checks for first phase. Note checking for self contained (complete) usually doesn't give a false result.   
 4. If the tool reports #include A and #include B are redundant, it's possible that only one of A or B is redundant, not both. For example, if B includes A, then A is redundant, but B is not.  
 5. If B includes A, and a file includes both A and B, and the file uses features in A directly. Though A will be reported as redundant, you'd better keep A in the file because the file uses it. Though it doesn't harm to remove A from the includes. This point is my personal opinion.  
 
