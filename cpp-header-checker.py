@@ -136,6 +136,7 @@ class CompleteHeaderProcessor(TaskProcessor) :
 			self.getApp().log('%s - OK' % (header))
 		else :
 			self.getApp().log('%s - ERROR\n%s' % (header, result.stdout))
+			self.getApp().error()
 
 class RedundantHeaderProcessor(TaskProcessor) :
 	def __init__(self, app):
@@ -172,6 +173,7 @@ class RedundantHeaderProcessor(TaskProcessor) :
 		else :
 			# Display log after all #includes are checked, this ease for looking at the errors
 			self.getApp().log('%s - ERROR redundant: %s' % (header, ', '.join(redundantIncludeList)))
+			self.getApp().error()
 
 class Application :
 	def __init__(self) :
@@ -180,6 +182,7 @@ class Application :
 		self._command = 'gcc {file} -c -o {file}.o'
 		self._tempPath = None
 		self._threads = None
+		self._stopOnError = 'yes'
 		self._queue = queue.Queue()
 		self._lock = threading.Lock()
 		self._processor = None
@@ -196,7 +199,8 @@ class Application :
 			print(message)
 
 	def error(self) :
-		self._stopping = True
+		if self._stopOnError == 'yes' :
+			self._stopping = True
 
 	def shouldStop(self) :
 		return self._stopping
@@ -258,10 +262,17 @@ class Application :
 			default = 'complete',
 			choices = [ 'complete', 'redundant' ]
 		)
-		parser.add_argument('--command', required = False, help = "Command", default = self._command)
-		parser.add_argument('--temp', required = False, help = "Temp path", default = None)
+		parser.add_argument('--command', required = False, help = "The command to compile the sample cpp source file", default = self._command)
+		parser.add_argument('--temp', required = False, help = "Temporary directory. Default is the system temporary folder", default = None)
 		parser.add_argument('--exclude', action = 'append', required = False, help = "The patterns to exclude, can not have wildcard")
 		parser.add_argument('--threads', required = False, type = int, help = "Number of threads", default = None)
+		parser.add_argument(
+			'--stop-on-error',
+			required = False,
+			help = "Whether stop on first error, choices are auto/yes/no. 'auto' stops for action 'complete', not for 'redundant'",
+			default = 'auto',
+			choices = [ 'auto', 'yes', 'no' ]
+		)
 
 		if len(commandLineArguments) == 0 :
 			self._showUsage(parser)
@@ -292,11 +303,16 @@ class Application :
 			self._threads = os.cpu_count()
 		if self._threads is None or self._threads < 1 :
 			self._threads = 1
+		self._stopOnError = options['stop_on_error'].lower()
 		action = options['action']
 		if action == 'redundant' :
 			self._processor = RedundantHeaderProcessor(self)
+			if self._stopOnError == 'auto' :
+				self._stopOnError = 'no'
 		else :
 			self._processor = CompleteHeaderProcessor(self)
+			if self._stopOnError == 'auto' :
+				self._stopOnError = 'yes'
 		return True
 
 	def _showUsage(self, parser) :

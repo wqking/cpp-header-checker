@@ -26,7 +26,7 @@ Apache License, Version 2.0
 ## Command line
 
 ```
-python cpp-header-checker.py ACTION [--help] [-h] --source SOURCE [--command COMMAND] [--temp TEMP] [--exclude EXCLUDE] [--threads THREADS]
+python cpp-header-checker.py ACTION [--help] [-h] --source SOURCE [--command COMMAND] [--temp TEMP] [--exclude EXCLUDE] [--threads THREADS] [--stop-on-error STOP_ON_ERROR]
 ```
 
 #### ACTION, optional
@@ -69,6 +69,12 @@ There can be multiple `--exclude EXCLUDE`.
 
 Specify the number of threads to execute the check. Default is the number of CPU cores.  
 
+#### --stop-on-error STOP_ON_ERROR, optional
+
+Specify whether the tool should stop checking more files when there is any error. Default is `auto`.
+STOP_ON_ERROR can be `auto`, `yes`, `no`. If it's `auto`, then it's `yes` for action `complete`, and `no` for action `redundant`.
+When checking self contained headers (action `complete`), stopping on the first error will reduce the error messages and make it easier to analyze the errors.  
+
 ## Examples
 
 #### Check self contained headers for eventpp library
@@ -103,6 +109,6 @@ For action `redundant`, which checks if any `#include` is redundant, the tool wi
 5. If B includes A, and a file includes both A and B, and the file uses features in A directly. Though A will be reported as redundant, you'd better keep A in the file because the file uses it. Though it doesn't harm to remove A from the includes. This point is my personal opinion.  
 
 ## Final words
-Please use this tool as an auxiliary, not an ultimate tool. You need to check the result carefully and decide how to modify the source files.  
+Please use this tool as an auxiliary, not a sophisticated tool. You need to check the result carefully and decide how to modify the source files.  
 Though the tool won't modify any source files, you'd better backup or commit your files before running the tool.  
 I've used this tool in my [eventpp library](https://github.com/wqking/eventpp) and fixed several header related problems.  
